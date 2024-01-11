@@ -1,5 +1,7 @@
 #include "Shader.hxx"
 #include <cstdio>
+#include <iterator>
+#include <vector>
 #include <string>
 
 #define GLEW_STATIC
@@ -132,7 +134,7 @@ int main( int argv,char* argc[] ){
 		-0.5f,	0.5f,	-0.5f,		0.0f,	1.0f
 	};
 
-	glm::vec3 cubePositions[]{
+	std::vector< glm::vec3 > cubePositions{
 		glm::vec3( .0f,.0f,.0f ),
 		glm::vec3( 2.f,5.f,-15.f ),
 		glm::vec3( -1.5f,-2.2f,-2.5f ),
@@ -144,8 +146,6 @@ int main( int argv,char* argc[] ){
 		glm::vec3( 1.5f,.2f,-1.5f ),
 		glm::vec3( -1.3f,1.f,-1.5f )
 	};
-
-	GLuint cubePositionsSize{ sizeof( cubePositions )/sizeof( glm::vec3 ) };
 
 	GLuint VBO,VAO;
 	glGenVertexArrays( 1,&VAO );
@@ -215,13 +215,13 @@ int main( int argv,char* argc[] ){
 
 		glBindVertexArray( VAO );
 
-		for( GLuint i{ 0 };i < cubePositionsSize; ++i ){
+		int cubeAngle{};
+		for( auto cubePosition : cubePositions ){
 			glm::mat4 model{ 1.f };
-			model=glm::translate( model,cubePositions[ i ] );
-			GLfloat angle{ 20.f*i };
+			model=glm::translate( model,cubePosition );
+			GLfloat angle{ 20.f*( cubeAngle++ ) };
 			model = glm::rotate( model,angle,glm::vec3( 1.f,.3f,.5f ) );
 			glUniformMatrix4fv( modelLoc,1,GL_FALSE,glm::value_ptr( model ) );
-
 
 			glDrawArrays( GL_TRIANGLES,0,36 );
 		}
