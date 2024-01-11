@@ -89,7 +89,7 @@ int main( int argv,char* argc[] ){
 	 */
 
 	// Perspective Projection Vectices
-	GLfloat vertices[]{
+	std::vector< GLfloat > vertices{
 	// 		Positions		Texture Co-ordinates
 		-0.5f,	-0.5f,	-0.5f,		0.0f,	0.0f,
 		0.5f,	-0.5f,	-0.5f,		1.0f,	0.0f,
@@ -154,7 +154,7 @@ int main( int argv,char* argc[] ){
 	glBindVertexArray( VAO );
 
 	glBindBuffer( GL_ARRAY_BUFFER,VBO );
-	glBufferData( GL_ARRAY_BUFFER,sizeof( vertices ),vertices,GL_STATIC_DRAW );
+	glBufferData( GL_ARRAY_BUFFER,vertices.size()*sizeof( glm::vec3 ),vertices.data(),GL_STATIC_DRAW );
 
 	glVertexAttribPointer( 0,3,GL_FLOAT,GL_FALSE,5*sizeof( GLfloat ),reinterpret_cast< GLvoid* >( 0 ) );
 	glEnableVertexAttribArray( 0 );
