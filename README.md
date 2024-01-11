@@ -1,4 +1,4 @@
-# LearnOpenGLwithPackt
+# Learn OpenGL by Frahaan Hussain (Packt)
 Learn OpenGL Exercises from the book by Frahaan Hussain for Packt. Tweaked a bit to use c++11 features.
 
 ## Compile
