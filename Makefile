@@ -31,3 +31,12 @@ Chapter3-2:
 
 Chapter3-3:
 	$(CXX) $(CXXFLAGS) -o ./bin/$@.exe $(CHAPTER)3/3-3/main.cxx $(DEPS) $(IDIR) -Iinclude/Chapter3 $(LIBS) $(LDIR)
+
+Chapter4-1:
+	$(CXX) $(CXXFLAGS) -o ./bin/$@.exe $(CHAPTER)4/4-1/main.cxx $(DEPS) $(IDIR) -Iinclude/Chapter4 $(LIBS) $(LDIR)
+
+Chapter4-2:
+	$(CXX) $(CXXFLAGS) -o ./bin/$@.exe $(CHAPTER)4/4-2/main.cxx $(DEPS) $(IDIR) -Iinclude/Chapter4 $(LIBS) $(LDIR)
+
+Chapter4-3:
+	$(CXX) $(CXXFLAGS) -o ./bin/$@.exe $(CHAPTER)4/4-3/main.cxx $(DEPS) $(IDIR) -Iinclude/Chapter4 $(LIBS) $(LDIR)
