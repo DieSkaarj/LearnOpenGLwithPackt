@@ -40,3 +40,6 @@ Chapter4-2:
 
 Chapter4-3:
 	$(CXX) $(CXXFLAGS) -o ./bin/$@.exe $(CHAPTER)4/4-3/main.cxx $(DEPS) $(IDIR) -Iinclude/Chapter4 $(LIBS) $(LDIR)
+
+Chapter5-1:
+	$(CXX) $(CXXFLAGS) -o ./bin/$@.exe $(CHAPTER)5/5-1/main.cxx $(DEPS) $(IDIR) -Iinclude/Chapter5 $(LIBS) $(LDIR)
