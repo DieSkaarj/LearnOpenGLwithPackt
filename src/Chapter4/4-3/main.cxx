@@ -14,7 +14,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Chapter4/4-1/Camera.hxx"
+#include "Camera.hxx"
 
 const std::string \
 	shaderPath{ "./src/Chapter4/4-3/" },
