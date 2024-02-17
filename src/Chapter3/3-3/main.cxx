@@ -1,5 +1,6 @@
 #include "Shader.hxx"
 #include <cstdio>
+#include <limits.h>
 #include <iterator>
 #include <vector>
 #include <string>
@@ -14,7 +15,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Chapter3/3-3/Camera.h"
+#include "Chapter3/Camera.h"
 
 const std::string \
 	shaderPath{ "./src/Chapter3/3-2/" },
@@ -215,11 +216,11 @@ int main( int argv,char* argc[] ){
 
 		glBindVertexArray( VAO );
 
-		int cubeAngle{};
+		int cubeAngle{ INT_MAX };
 		for( auto cubePosition : cubePositions ){
 			glm::mat4 model{ 1.f };
 			model=glm::translate( model,cubePosition );
-			GLfloat angle{ 20.f*( cubeAngle++ ) };
+			GLfloat angle{ 20.f*( ++cubeAngle ) };
 			model = glm::rotate( model,angle,glm::vec3( 1.f,.3f,.5f ) );
 			glUniformMatrix4fv( modelLoc,1,GL_FALSE,glm::value_ptr( model ) );
 
