@@ -18,7 +18,7 @@
 #include "Camera.hxx"
 
 const std::string \
-	shaderPath{ "./src/Chapter5/5-3/" },
+	shaderPath{ "./src/Chapter5/5-4/" },
 	imagePath{ "./res/Chapter4/" };
 
 const GLuint WIDTH{ 800 },HEIGHT{ 600 };
@@ -38,13 +38,14 @@ bool keys[1024],
 GLfloat deltaTime{ .0f },lastFrame{ .0f };
 
 glm::vec3 lightPos( 1.2f,1.f,2.f );
-GLfloat lightAng( 0.f );
 
 /*
  *
 *Entrance
  *
  */
+
+constexpr int NUMBER_OF_POINT_LIGHTS{ 4 };
 
 int main( int argv,char* argc[] ){
 	glfwInit();
@@ -55,7 +56,7 @@ int main( int argv,char* argc[] ){
 	glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT,GL_TRUE );
 	glfwWindowHint( GLFW_RESIZABLE,GL_FALSE );
 
-	GLFWwindow *window{ glfwCreateWindow( WIDTH,HEIGHT,"Learn OpenGL: Chapter 5-3",nullptr,nullptr ) };
+	GLFWwindow *window{ glfwCreateWindow( WIDTH,HEIGHT,"Learn OpenGL: Chapter 5-4",nullptr,nullptr ) };
 
 	if( nullptr==window ){
 		std::cerr << "Failed to create GLFW window\n";
@@ -84,16 +85,13 @@ int main( int argv,char* argc[] ){
 
 	glEnable( GL_BLEND );
 	glEnable( GL_DEPTH_TEST );
-	glBlendFunc( GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA );
+//	glBlendFunc( GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA );
 
 	Shader lightingShader( std::string( shaderPath+"lighting.vs" ).c_str(),std::string( shaderPath+"lighting.frag" ).c_str() );
-//	Shader lampShader( std::string( shaderPath+"lamp.vs" ).c_str(),std::string( shaderPath+"lamp.frag" ).c_str() );
+	Shader lampShader( std::string( shaderPath+"lamp.vs" ).c_str(),std::string( shaderPath+"lamp.frag" ).c_str() );
 
-	/*
-	*Create vertex data
-	 */
-
-	// Perspective Projection Vectices
+	/* Create vertex data */
+	/* Perspective Projection Vectices */
 	const int cubeTotalVertVecs{ 288 }; /* 8(dimensions+normals+tex-coords)*6(verts)*6(faces) */
 	std::array< GLfloat,cubeTotalVertVecs > vertices{
 	// 		Positions		Normals			Texture Co-ords
@@ -153,6 +151,14 @@ int main( int argv,char* argc[] ){
 		glm::vec3( -1.3f,1.f,-1.5f ),
 	};
 
+	/* Point Light Positions */
+	std::array< glm::vec3,NUMBER_OF_POINT_LIGHTS > pointLightPositions{
+		glm::vec3( .7f,.2f,2.f ),
+		glm::vec3( 2.3f,-3.3f,-4.f ),
+		glm::vec3( -4.f,2.f,-12.f ),
+		glm::vec3( 0.f,0.f,-3.f ),
+	};
+
 	GLuint VBO,containerVAO;
 	glGenVertexArrays( 1,&containerVAO );
 	glGenBuffers( 1,&VBO );
@@ -168,7 +174,7 @@ int main( int argv,char* argc[] ){
 	glVertexAttribPointer( 2,2,GL_FLOAT,GL_FALSE,8*sizeof( GLfloat ),reinterpret_cast< GLvoid* >( 6*sizeof( GLfloat ) ) );
 	glEnableVertexAttribArray( 2 );
 	glBindVertexArray( 0 );
-/*
+
  	GLuint lightVAO;
 	glGenVertexArrays( 1,&lightVAO );
 	glBindVertexArray( lightVAO );
@@ -176,7 +182,7 @@ int main( int argv,char* argc[] ){
 	glVertexAttribPointer( 0,3,GL_FLOAT,GL_FALSE,8*sizeof( GLfloat ),reinterpret_cast< GLvoid* >( 0 ) );
 	glEnableVertexAttribArray( 0 );
 	glBindVertexArray( 0 );
-*/
+
 	GLuint diffuseMap,specularMap,emissionMap;
 	glGenTextures( 1,&diffuseMap );
 	glGenTextures( 1,&specularMap );
@@ -187,7 +193,7 @@ int main( int argv,char* argc[] ){
 	glBindTexture( GL_TEXTURE_2D,diffuseMap );
 	glTexImage2D( GL_TEXTURE_2D,0,GL_RGB,textureWidth,textureHeight,0,GL_RGB,GL_UNSIGNED_BYTE,image );
 	glGenerateMipmap( GL_TEXTURE_2D );
-//	SOIL_free_image_data( image );
+	SOIL_free_image_data( image );
 	glTexParameteri( GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT );
 	glTexParameteri( GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT );
 	glTexParameteri( GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR );
@@ -213,10 +219,6 @@ int main( int argv,char* argc[] ){
 	glm::mat4 projection{ glm::perspective( camera.GetZoom(),static_cast< GLfloat >( SCREEN_WIDTH )/static_cast< GLfloat >( SCREEN_HEIGHT ),.1f,100.f ) };
 
 	while( !glfwWindowShouldClose( window ) ){
-		/*
-		lightPos.x -=0.00001f;
-		lightPos.z -=0.00001f;
-		*/
 		GLfloat currentFrame{ static_cast< GLfloat >( glfwGetTime() ) };
 		deltaTime=currentFrame-lastFrame;
 		lastFrame=currentFrame;
@@ -229,31 +231,42 @@ int main( int argv,char* argc[] ){
 
 		lightingShader.Use();
 
-		// Book describes using unsigned however glGetUni... returns signed, and there's no reason to cast it to unsigned.
-		GLint	lightPosLoc{ glGetUniformLocation( lightingShader._Program,"light.position" ) },
-			/*lightDirLoc{ glGetUniformLocation( lightingShader._Program,"viewPos" ) },*/
-			lightSpotDirLoc{ glGetUniformLocation( lightingShader._Program,"light.direction" ) },
-			lightSpotCutOffLoc{ glGetUniformLocation( lightingShader._Program,"light.cutOff" ) },
-			lightSpotOuterCutOffLoc{ glGetUniformLocation( lightingShader._Program,"light.outerCutOff" ) },
-			viewPosLoc{ glGetUniformLocation( lightingShader._Program,"viewPos" ) };
+		GLint	viewPosLoc{ glGetUniformLocation( lightingShader._Program,"viewPos" ) };
 
-		glUniform3f( lightPosLoc,camera.GetPosition().x,camera.GetPosition().y,-camera.GetPosition().z );
-		//glUniform3f( lightDirLoc,-.2f,-1.f,-.3f );
-		glUniform3f( lightSpotDirLoc,camera.GetFront().x,camera.GetFront().y,-camera.GetFront().z );
-
-		glUniform1f( lightSpotCutOffLoc,glm::cos( glm::radians( 12.5f ) ) );
-		glUniform1f( lightSpotOuterCutOffLoc,glm::cos( glm::radians( 17.5f ) ) );
-
-		glUniform3f( viewPosLoc,camera.GetPosition().x,camera.GetPosition().x,-camera.GetPosition().z );
-
-		glUniform3f( glGetUniformLocation( lightingShader._Program,"light.ambient" ),.1f,.1f,.1f );
-		glUniform3f( glGetUniformLocation( lightingShader._Program,"light.diffuse" ),.8f,.8f,.8f );
-		glUniform3f( glGetUniformLocation( lightingShader._Program,"light.specular" ),1.f,1.f,1.f );
-		glUniform1f( glGetUniformLocation( lightingShader._Program,"light.constant" ),1.f );
-		glUniform1f( glGetUniformLocation( lightingShader._Program,"light.linear" ),0.09 );
-		glUniform1f( glGetUniformLocation( lightingShader._Program,"light.quadratic" ),0.032 );
-
+		glUniform3f( viewPosLoc,camera.GetPosition().x,camera.GetPosition().x,camera.GetPosition().z );
 		glUniform1f( glGetUniformLocation( lightingShader._Program,"material.shininess" ),32.f );
+
+		/* Directional Light */
+		glUniform3f( glGetUniformLocation( lightingShader._Program,"dirLight.direction" ),-.2f,-1.0f,-.3f );
+		glUniform3f( glGetUniformLocation( lightingShader._Program,"dirLight.ambient" ),.05f,.05f,.05f );
+		glUniform3f( glGetUniformLocation( lightingShader._Program,"dirLight.diffuse" ),.4f,.4f,.4f );
+		glUniform3f( glGetUniformLocation( lightingShader._Program,"dirLight.specular" ),.5f,.5f,.5f );
+
+		/* Point Light */
+		int i{ 0 };
+		for( auto lightPos:pointLightPositions ){
+			std::string light{ "pointLight["+std::to_string( i++ )+"]." };
+			glUniform3f( glGetUniformLocation( lightingShader._Program,std::string( light+"position" ).c_str() ),lightPos.x,lightPos.y,lightPos.z );
+			glUniform3f( glGetUniformLocation( lightingShader._Program,std::string( light+"ambient" ).c_str() ),.05f,.05f,.05f );
+			glUniform3f( glGetUniformLocation( lightingShader._Program,std::string( light+"diffuse" ).c_str() ),.8f,.8f,.8f );
+			glUniform3f( glGetUniformLocation( lightingShader._Program,std::string( light+"specular" ).c_str() ),1.f,1.f,1.f );
+			glUniform1f( glGetUniformLocation( lightingShader._Program,std::string( light+"constant" ).c_str() ),1.f );
+			glUniform1f( glGetUniformLocation( lightingShader._Program,std::string( light+"linear" ).c_str() ),0.09f );
+			glUniform1f( glGetUniformLocation( lightingShader._Program,std::string( light+"quadratic" ).c_str() ),0.032f );
+		}
+
+		/* Spot Light */
+		glUniform3f( glGetUniformLocation( lightingShader._Program,"spotLight.position" ),camera.GetPosition().x,camera.GetPosition().y,camera.GetPosition().z );
+		glUniform3f( glGetUniformLocation( lightingShader._Program,"spotLight.direction" ),camera.GetFront().x,camera.GetFront().y,camera.GetFront().z );
+		glUniform3f( glGetUniformLocation( lightingShader._Program,"spotLight.ambient" ),.0f,.0f,.0f );
+		glUniform3f( glGetUniformLocation( lightingShader._Program,"spotLight.diffuse" ),1.f,1.f,1.f );
+		glUniform3f( glGetUniformLocation( lightingShader._Program,"spotLight.specular" ),1.f,1.f,1.f );
+
+		glUniform1f( glGetUniformLocation( lightingShader._Program,"spotLight.constant" ),1.f );
+		glUniform1f( glGetUniformLocation( lightingShader._Program,"spotLight.linear" ),0.09f );
+		glUniform1f( glGetUniformLocation( lightingShader._Program,"spotLight.quadratic" ),0.032f );
+		glUniform1f( glGetUniformLocation( lightingShader._Program,"spotLight.cutOff" ),glm::cos( glm::radians( 12.5f ) ) );
+		glUniform1f( glGetUniformLocation( lightingShader._Program,"spotLight.outerCutOff" ),glm::cos( glm::radians( 15.f ) ) );
 
 		glm::mat4 view{ camera.GetViewMatrix() };
 
@@ -274,22 +287,19 @@ int main( int argv,char* argc[] ){
 		glm::mat4 model{ 1.f };
 		glBindVertexArray( containerVAO );
 
-		int i{ 0 };
+		i=0;
 		for( auto modelTransposition : cubePositions ){	
 			// reset model matrix to 1.0 preventing null value
 			model = glm::mat4( 1.f );
 			model = glm::translate( model,modelTransposition );
 			GLfloat angle{ 20.f*( i++ ) };
 			model = glm::rotate( model,angle,glm::vec3( 1.f,.3f,.5f ) );
-			//model = glm::scale( model,glm::vec3( .2f ) );
-
 			glUniformMatrix4fv( modelLoc,1,GL_FALSE,glm::value_ptr( model ) );
 
 			glDrawArrays( GL_TRIANGLES,0,36 ); // 6 vertices per face, 6 faces on a cube; 6(verts)*6(faces)=36(verts-total)
 		}
-
 		glBindVertexArray( 0 );
-/*
+
 		lampShader.Use();
 
 		modelLoc = glGetUniformLocation( lampShader._Program,"model" );
@@ -301,21 +311,31 @@ int main( int argv,char* argc[] ){
 
 		model = glm::mat4( 1.f );
 		model = glm::translate( model,lightPos );
-		GLfloat angle{ 45.f };
-		model = glm::rotate( model,angle,glm::vec3( .25f,.25f,.25f ) );
-		model = glm::scale( model,glm::vec3( .2f ) );
+		model = glm::scale( model,glm::vec3( .3f ) );
 		
 		glUniformMatrix4fv( modelLoc,1,GL_FALSE,glm::value_ptr( model ) );
 
 		glBindVertexArray( lightVAO );
 		glDrawArrays( GL_TRIANGLES,0,36 );
 		glBindVertexArray( 0 );
-*/
+
+		glBindVertexArray( lightVAO );
+
+		for( auto lightPos:pointLightPositions ){
+			model=glm::mat4( 1.f );
+			model=glm::translate( model,lightPos );
+			model=glm::scale( model,glm::vec3( .2f ) );
+
+			glUniformMatrix4fv( modelLoc,1,GL_FALSE,glm::value_ptr( model ) );
+			glDrawArrays( GL_TRIANGLES,0,36 );
+		}
+		glBindVertexArray( 0 );
+
 		glfwSwapBuffers( window );
 	}
 
 	glDeleteVertexArrays( 1,&containerVAO );
-//	glDeleteVertexArrays( 1,&lightVAO );
+	glDeleteVertexArrays( 1,&lightVAO );
 	glDeleteBuffers( 1,&VBO );
 
 	glfwTerminate();
